@@ -1,0 +1,97 @@
+{
+  "ver": "2.3.12",
+  "importer": "fbx",
+  "imported": true,
+  "uuid": "30a873b0-148f-46c8-8c1a-5141926a0837",
+  "files": [],
+  "subMetas": {
+    "c44f0": {
+      "importer": "gltf-mesh",
+      "uuid": "30a873b0-148f-46c8-8c1a-5141926a0837@c44f0",
+      "displayName": "",
+      "id": "c44f0",
+      "name": "Cube.040.mesh",
+      "userData": {
+        "gltfIndex": 0,
+        "triangleCount": 376
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "0e10c": {
+      "importer": "gltf-material",
+      "uuid": "30a873b0-148f-46c8-8c1a-5141926a0837@0e10c",
+      "displayName": "",
+      "id": "0e10c",
+      "name": "Material_Map 1-2_F.material",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "7694b": {
+      "importer": "gltf-scene",
+      "uuid": "30a873b0-148f-46c8-8c1a-5141926a0837@7694b",
+      "displayName": "",
+      "id": "7694b",
+      "name": "MachineSlot_2.prefab",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "imageMetas": [],
+    "fbx": {
+      "smartMaterialEnabled": true
+    },
+    "redirect": "30a873b0-148f-46c8-8c1a-5141926a0837@7694b",
+    "lods": {
+      "enable": false,
+      "hasBuiltinLOD": false,
+      "options": [
+        {
+          "screenRatio": 0.25,
+          "faceCount": 1
+        },
+        {
+          "screenRatio": 0.125,
+          "faceCount": 0.25
+        },
+        {
+          "screenRatio": 0.01,
+          "faceCount": 0.1
+        }
+      ]
+    },
+    "assetFinder": {
+      "meshes": [
+        "30a873b0-148f-46c8-8c1a-5141926a0837@c44f0"
+      ],
+      "skeletons": [],
+      "textures": [],
+      "materials": [
+        "30a873b0-148f-46c8-8c1a-5141926a0837@0e10c"
+      ],
+      "scenes": [
+        "30a873b0-148f-46c8-8c1a-5141926a0837@7694b"
+      ]
+    }
+  }
+}
