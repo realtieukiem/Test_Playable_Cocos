@@ -1,101 +1,128 @@
-import { _decorator, Component, Node, Vec3, tween } from 'cc';
+import { _decorator, Component, Node, Vec3, tween, SkeletalAnimation, Quat, math } from 'cc';
 import { CharacterSpawner } from './ChacterSpawner';
 import { CustomerController } from './CustomerController';
+import { IdleState } from './Anim/IdleState';
+import { RunState } from './Anim/RunState';
+import { AttackState } from './Anim/AttackState';
+import { Data } from './Data';
 const { ccclass, property } = _decorator;
 
 @ccclass('StaffController')
 export class StaffController extends Component {
+
+
     @property({ type: CharacterSpawner })
-    characterSpawner: CharacterSpawner | null = null; // Tham chiếu đến CharacterSpawner
+    characterSpawner: CharacterSpawner | null = null;
 
     @property({ type: Node })
-    createItemPosition: Node | null = null; // Vị trí tạo đồ
+    createItemPosition: Node | null = null;
 
-    private currentTargetIndex: number = -1; // Chỉ số vị trí customer hiện tại
-    private currentState: string = "Idle"; // Trạng thái hiện tại của staff
+    @property({ type: SkeletalAnimation })
+    private skeletalAnimation: SkeletalAnimation | null = null;
+
+
+
+    private currentStateAnim: any | null = null;
+    private currentTargetIndex: number = -1;
+    private currentState: string = "Idle";
+    private target: Vec3 = new Vec3(0, 180, 0);
+    //private originalRotation: Quat = new Quat();
+
 
     start() {
-        // Kiểm tra xem đã thiết lập CharacterSpawner chưa
-        if (!this.characterSpawner) {
-            console.error("Please assign the CharacterSpawner in the Inspector.");
-        }
-
-        // Kiểm tra xem vị trí tạo đồ có tồn tại không
-        if (!this.createItemPosition) {
-            console.error("Please assign the create item position in the Inspector.");
-        }
-
-        // Bắt đầu quy trình di chuyển
+        if (!this.characterSpawner) { console.error("Please assign the CharacterSpawner in the Inspector."); }
+        if (!this.createItemPosition) { console.error("Please assign the create item position in the Inspector."); }
+        //this.node.getRotation(this.originalRotation);
+        this.changeState('Idle');
         this.moveToNextState();
     }
+    //Animation
+    public changeState(stateName: string): void {
+        if (this.currentStateAnim) {
+            this.currentStateAnim.onExit(); // Rời khỏi trạng thái hiện tại
+        }
 
-    /**
-     * Chuyển sang trạng thái tiếp theo
-     */
+        switch (stateName) {
+            case 'Idle':
+                this.currentStateAnim = new IdleState(this.skeletalAnimation);
+                this.currentStateAnim.state = this.skeletalAnimation.clips[0].name;
+                break;
+            case 'Run':
+                this.currentStateAnim = new RunState(this.skeletalAnimation);
+                this.currentStateAnim.state = this.skeletalAnimation.clips[1].name;
+                break;
+            case 'Attack':
+                this.currentStateAnim = new AttackState(this.skeletalAnimation);
+                this.currentStateAnim.state = this.skeletalAnimation.clips[2].name;
+                break;
+            default:
+                console.warn(`Unknown state: ${stateName}`);
+                return;
+        }
+
+        this.currentStateAnim.onEnter();
+    }
+
     private moveToNextState() {
         switch (this.currentState) {
             case "Idle":
-                this.checkAndMoveToCustomerSequentially(); // Trạng thái 1: Kiểm tra tuần tự và di chuyển đến customer
+                this.checkAndMoveToCustomerSequentially();
                 break;
             case "MovingToCustomer":
-                this.checkCustomerNeed(); // Trạng thái 2: Kiểm tra nhu cầu của customer
+                this.checkCustomerNeed();
                 break;
             case "CheckingCustomerNeed":
-                this.moveToCreateItemPosition(); // Trạng thái 3: Di chuyển đến vị trí tạo đồ
+                this.moveToCreateItemPosition();
                 break;
             case "MovingToCreateItem":
-                this.returnToCustomer(); // Trạng thái 4: Quay lại vị trí customer
+                this.returnToCustomer();
                 break;
             case "ReturningToCustomer":
-                this.resetState(); // Kết thúc và quay về trạng thái ban đầu
+                this.resetState();
                 break;
         }
     }
 
-    /**
-     * Kiểm tra tuần tự các vị trí spawn và di chuyển đến khi có customer
-     */
     private checkAndMoveToCustomerSequentially() {
-        this.currentState = "Idle";
-
-        // Kiểm tra tuần tự các vị trí spawn
+        // Move Customer
         for (let i = 0; i < 4; i++) {
             if (this.characterSpawner?.isSpecificPositionOccupied(i)) {
-                // Nếu vị trí có customer, lấy world position và điều chỉnh trục Z
                 const targetPosition = this.characterSpawner.getSpecificWorldPosition(i);
                 if (targetPosition) {
-                    console.log(`Found customer at position ${i}. Moving there.`);
-                    this.currentTargetIndex = i;
-                    // Tạo bản sao của targetPosition và điều chỉnh trục Z
-                    //const adjustedPosition = targetPosition.clone();
-                    //adjustedPosition.z -= 5; // Giảm giá trị Z đi 5 đơn vị
-
-                    // Chuyển trạng thái và di chuyển
+                    this.changeState("Run");
                     this.currentState = "MovingToCustomer";
+
+                    const direction = this.target.clone().subtract(this.node.worldPosition).normalize();
+                    const targetRotation = this.calculateRotation(direction, true);
+                    //console.log(`Found customer at position ${i}. Moving there.`);
+                    this.currentTargetIndex = i;
+                    const adjustedPosition = targetPosition.clone();
+                    adjustedPosition.z += 2;
+
                     tween(this.node)
-                        .to(2, { worldPosition: targetPosition }) // Di chuyển đến vị trí đã điều chỉnh
+                        .to(0.05, { rotation: targetRotation })
+                        .parallel(
+                            tween(this.node).to(2, { worldPosition: adjustedPosition }),
+                            tween(this.node).delay(1.5)
+                        )
                         .call(() => {
-                            console.log("Arrived at customer position.");
-                            this.moveToNextState(); // Chuyển sang trạng thái tiếp theo
+                            this.changeState("Idle");
+                            this.moveToNextState();
                         })
                         .start();
-                    return; // Dừng kiểm tra khi đã tìm thấy customer
+
+                    return;
                 }
             }
         }
-
-        // Nếu không có customer ở bất kỳ vị trí nào, đợi 1 giây và thử lại
-        console.log("No customers available. Checking again in 1 second...");
+        //console.log("No customers available. Checking again in 1 second...");
         this.scheduleOnce(() => this.checkAndMoveToCustomerSequentially(), 1);
     }
 
-    /**
-     * Kiểm tra nhu cầu của customer
-     */
     private checkCustomerNeed() {
+        //Cutomer need
         this.currentState = "CheckingCustomerNeed";
 
-        // Lấy node customer tại vị trí hiện tại
         const customerNode = this.characterSpawner?.getCustomerNodeByIndex(this.currentTargetIndex);
         if (!customerNode) {
             console.error("Customer node not found!");
@@ -103,7 +130,6 @@ export class StaffController extends Component {
             return;
         }
 
-        // Lấy component CustomerManager từ customer node
         const customerController = customerNode.getComponent(CustomerController);
         if (!customerController) {
             console.error("CustomerManager component not found on customer node!");
@@ -111,69 +137,89 @@ export class StaffController extends Component {
             return;
         }
 
-        // Kiểm tra nhu cầu của customer
         const customerNeed = customerController.getCustomerNeed();
         console.log(`Customer needs: ${customerNeed}`);
 
-        // Đợi 5 giây trước khi chuyển sang trạng thái tiếp theo
         this.scheduleOnce(() => {
             console.log("Finished checking customer need.");
             this.moveToNextState();
-        }, 5); // Đợi 5 giây
+        }, Data.Time_Work_Staff);
     }
 
     /**
-     * Trạng thái 3: Di chuyển đến vị trí tạo đồ
+     * Craft item
      */
     private moveToCreateItemPosition() {
         this.currentState = "MovingToCreateItem";
 
         if (!this.createItemPosition) return;
 
-        console.log("Moving to create item position.");
-
-        // Lấy world position của vị trí tạo đồ và điều chỉnh trục Z
+        const direction = this.target.clone().subtract(this.node.worldPosition).normalize();
+        const targetRotation = this.calculateRotation(direction);
         const targetPosition = this.createItemPosition.getWorldPosition(new Vec3());
-        // const adjustedPosition = targetPosition.clone();
-        // adjustedPosition.z -= 5; // Giảm giá trị Z đi 5 đơn vị
+        const adjustedPosition = targetPosition.clone();
+        adjustedPosition.z += 2;
 
-        // Sử dụng tween để di chuyển
+        this.changeState("Run");
+
+
         tween(this.node)
-            .to(2, { worldPosition: targetPosition }) // Di chuyển đến vị trí đã điều chỉnh
+            .to(0.05, { rotation: targetRotation })
+            .parallel(
+                tween(this.node).to(2, { worldPosition: adjustedPosition }),
+                tween(this.node).delay(1.5),
+            )
             .call(() => {
-                console.log("Arrived at create item position.");
-                this.scheduleOnce(() => {
-                    this.moveToNextState();
-                }, 5); // Đợi 5 giây
+                this.changeState("Idle");
+
+                tween(this.node)
+                    .to(0.125, { eulerAngles: new Vec3(0, -90, 0) })
+                    .start();
             })
             .start();
+
+
+        this.scheduleOnce(() => {
+            //this.node.setRotation(this.originalRotation);
+            this.moveToNextState();
+
+        }, Data.Time_Work_Staff);
     }
 
     /**
      * Trạng thái 4: Quay lại vị trí customer
      */
     private returnToCustomer() {
+
         this.currentState = "ReturningToCustomer";
+        this.changeState("Run");
 
-        // Lấy world position của vị trí customer và điều chỉnh trục Z
         const customerPosition = this.characterSpawner?.getSpecificWorldPosition(this.currentTargetIndex);
-        if (!customerPosition) {
-            console.error("Customer position not found!");
-            this.moveToNextState();
-            return;
-        }
-
+        const direction = this.target.clone().subtract(this.node.worldPosition).normalize();
+        console.log(direction);
+        const targetRotation = this.calculateRotation(direction,true);
         const adjustedPosition = customerPosition.clone();
-        adjustedPosition.z -= 5; // Giảm giá trị Z đi 5 đơn vị
+        adjustedPosition.z += 2;
 
-        // Sử dụng tween để di chuyển
+
+
+
         tween(this.node)
-            .to(2, { worldPosition: adjustedPosition }) // Di chuyển đến vị trí đã điều chỉnh
+            .to(0.05, { rotation: targetRotation })
+            .parallel(
+                tween(this.node).to(2, { worldPosition: adjustedPosition }),
+                tween(this.node).delay(2)
+            )
             .call(() => {
-                console.log("Returned to customer position.");
-                this.moveToNextState(); // Kết thúc và reset trạng thái
+                this.changeState("Idle");
+                this.node.eulerAngles = new Vec3(0, 180, 0);
+                const customerNode = this.characterSpawner?.getCustomerNodeByIndex(this.currentTargetIndex);
+                const customerController = customerNode.getComponent(CustomerController);
+                customerController.doneBuy();
+                this.moveToNextState();
             })
             .start();
+
     }
 
     /**
@@ -181,9 +227,34 @@ export class StaffController extends Component {
      */
     private resetState() {
         this.currentState = "Idle";
-        console.log("Staff is now idle.");
+        this.changeState("Idle");
+
         this.scheduleOnce(() => {
             this.moveToNextState(); // Bắt đầu lại quy trình
         }, 0.125); // Đợi 1 giây trước khi bắt đầu lại
     }
+
+    private calculateRotation(direction: Vec3, reverse: boolean = false): Quat {
+        const angle = Math.atan2(direction.x, direction.z); // Tính góc theo radian
+        const reversedAngle = reverse ? angle + Math.PI : angle;
+        const angleInDegrees = math.toDegree(reversedAngle); // Chuyển đổi radian sang độ
+        const rotation = Quat.fromEuler(new Quat(), 0, angleInDegrees, 0); // Tạo quaternion từ góc
+
+        return rotation;
+    }
+    // private moveAndOrient(startPosition: Vec3, targetPosition: Vec3, onComplete: () => void) {
+    //     const direction = targetPosition.clone().subtract(startPosition).normalize();
+    //     const angle = Math.atan2(direction.x, direction.z); // Tính góc quay theo radian
+    //     const rotation = Quat.fromEuler(new Quat(), 0, math.toDegree(angle), 0); // Chuyển đổi sang quaternion
+
+    //     tween(this.node)
+    //         .to(0.1, { rotation }, { easing: "smooth" }) // Xoay nhân vật về hướng di chuyển
+    //         .parallel(
+    //             tween(this.node).to(2, { worldPosition: targetPosition }) // Di chuyển đến đích
+    //         )
+    //         .call(() => {
+    //             onComplete(); // Gọi callback khi hoàn thành
+    //         })
+    //         .start();
+    // }
 }

@@ -5,6 +5,7 @@ const { ccclass, property } = _decorator;
 export class Data{
     public static Time_Spawn_Customer: number = 5;
     public static Idle_Customer_Animation: string = "Idle";
+    public static Time_Work_Staff: number = 2;
 
 
 }
