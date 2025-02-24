@@ -11,7 +11,7 @@ export class StaffController extends Component {
     @property({ type: Node })
     createItemPosition: Node | null = null; // Vị trí tạo đồ
 
-    private currentTargetIndex: number = 0; // Chỉ số vị trí customer hiện tại
+    private currentTargetIndex: number = -1; // Chỉ số vị trí customer hiện tại
     private currentState: string = "Idle"; // Trạng thái hiện tại của staff
 
     start() {
@@ -65,7 +65,7 @@ export class StaffController extends Component {
                 const targetPosition = this.characterSpawner.getSpecificWorldPosition(i);
                 if (targetPosition) {
                     console.log(`Found customer at position ${i}. Moving there.`);
-
+                    this.currentTargetIndex = i;
                     // Tạo bản sao của targetPosition và điều chỉnh trục Z
                     //const adjustedPosition = targetPosition.clone();
                     //adjustedPosition.z -= 5; // Giảm giá trị Z đi 5 đơn vị
@@ -96,7 +96,7 @@ export class StaffController extends Component {
         this.currentState = "CheckingCustomerNeed";
 
         // Lấy node customer tại vị trí hiện tại
-        const customerNode = this.characterSpawner?.spawnPositions[this.currentTargetIndex];
+        const customerNode = this.characterSpawner?.getCustomerNodeByIndex(this.currentTargetIndex);
         if (!customerNode) {
             console.error("Customer node not found!");
             this.moveToNextState();
@@ -134,15 +134,17 @@ export class StaffController extends Component {
 
         // Lấy world position của vị trí tạo đồ và điều chỉnh trục Z
         const targetPosition = this.createItemPosition.getWorldPosition(new Vec3());
-        const adjustedPosition = targetPosition.clone();
-        adjustedPosition.z -= 5; // Giảm giá trị Z đi 5 đơn vị
+        // const adjustedPosition = targetPosition.clone();
+        // adjustedPosition.z -= 5; // Giảm giá trị Z đi 5 đơn vị
 
         // Sử dụng tween để di chuyển
         tween(this.node)
-            .to(2, { worldPosition: adjustedPosition }) // Di chuyển đến vị trí đã điều chỉnh
+            .to(2, { worldPosition: targetPosition }) // Di chuyển đến vị trí đã điều chỉnh
             .call(() => {
                 console.log("Arrived at create item position.");
-                this.moveToNextState(); // Chuyển sang trạng thái tiếp theo
+                this.scheduleOnce(() => {
+                    this.moveToNextState();
+                }, 5); // Đợi 5 giây
             })
             .start();
     }
@@ -182,6 +184,6 @@ export class StaffController extends Component {
         console.log("Staff is now idle.");
         this.scheduleOnce(() => {
             this.moveToNextState(); // Bắt đầu lại quy trình
-        }, 1); // Đợi 1 giây trước khi bắt đầu lại
+        }, 0.125); // Đợi 1 giây trước khi bắt đầu lại
     }
 }

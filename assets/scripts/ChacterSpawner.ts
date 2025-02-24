@@ -78,11 +78,11 @@ export class CharacterSpawner extends Component {
         }
         return false; // Vị trí trống
     }
-    public getOccupiedWorldPositions(): Vec3[] {
-        return this.spawnPositions
-            .filter((position) => this.isPositionOccupied(position))
-            .map((position) => position.getWorldPosition(new Vec3()));
-    }
+    // public getOccupiedWorldPositions(): Vec3[] {
+    //     return this.spawnPositions
+    //         .filter((worldPosition) => this.isPositionOccupied(worldPosition))
+    //         .map((worldPosition) => worldPosition.getWorldPosition(new Vec3()));
+    // }
 
     public isSpecificPositionOccupied(index: number): boolean {
         if (index < 0 || index >= this.spawnPositions.length) return false;
@@ -91,5 +91,24 @@ export class CharacterSpawner extends Component {
     public getSpecificWorldPosition(index: number): Vec3 | null {
         if (index < 0 || index >= this.spawnPositions.length) return null;
         return this.spawnPositions[index].getWorldPosition(new Vec3());
+    }
+    public getCustomerNodeByIndex(index: number): Node | null {
+        // Kiểm tra xem index có hợp lệ không
+        if (index < 0 || index >= this.node.children.length) {
+            console.error(`Invalid index: ${index}. Index must be between 0 and ${this.node.children.length - 1}.`);
+            return null;
+        }
+
+        // Lấy node con tại vị trí index
+        const customerNode = this.node.children[index];
+
+        // Kiểm tra xem node con có phải là customer không (tùy chọn kiểm tra component)
+        const customerController = customerNode.getComponent("CustomerController");
+        if (!customerController) {
+            console.warn(`Node at index ${index} is not a valid customer node.`);
+            return null;
+        }
+
+        return customerNode;
     }
 }
