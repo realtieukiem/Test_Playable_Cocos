@@ -12,11 +12,11 @@ export abstract class CharacterState {
 
     // Phương thức xử lý khi vào trạng thái
     public onEnter(): void {
-        console.log(`Entering state: ${this.constructor.name}`);
+        //console.log(`Entering state: ${this.constructor.name}`);
     }
 
     // Phương thức xử lý khi rời khỏi trạng thái
     public onExit(): void {
-        console.log(`Exiting state: ${this.constructor.name}`);
+        //console.log(`Exiting state: ${this.constructor.name}`);
     }
 }

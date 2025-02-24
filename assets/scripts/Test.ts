@@ -1,11 +1,11 @@
 import { _decorator, Component, Input, Node,KeyCode, input, EventKeyboard } from 'cc';
-import { CharacterController } from './Anim/CharacterController';
+import { CustomerController } from './CustomerController';
 const { ccclass, property } = _decorator;
 
 @ccclass('Test')
 export class Test extends Component {
-    @property({ type: CharacterController })
-    characterController: CharacterController | null = null; // Tham chiếu đến CharacterController
+    @property({ type: CustomerController })
+    customerController: CustomerController | null = null; // Tham chiếu đến CharacterController
 
     private keyState: { [key: string]: boolean } = {}; // Lưu trạng thái của các phím
 
@@ -26,14 +26,14 @@ export class Test extends Component {
      */
     private onKeyDown(event: EventKeyboard) {
         //this.keyState[event.keyCode.toString()] = true;
-        if (!this.characterController) return;
+        if (!this.customerController) return;
 
         switch (event.keyCode) {
             case KeyCode.KEY_A: // Nhấn A để chuyển sang trạng thái Attack
-                this.characterController.changeState('Attack');
+                this.customerController.changeState('Attack');
                 break;
             case KeyCode.KEY_D: // Nhấn D để chuyển sang trạng thái Run
-                this.characterController.changeState('Run');
+                this.customerController.changeState('Run');
                 break;
             default:
                 break;

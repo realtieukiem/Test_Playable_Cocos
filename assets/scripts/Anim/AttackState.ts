@@ -1,6 +1,7 @@
 import { CharacterState } from './CharacterState';
 
 export class AttackState extends CharacterState {
+    public state: string;
     public update(deltaTime: number): void {
         // Kiểm tra xem animation đã kết thúc chưa
         if (!this.skeletalAnimation.getState('attack')?.isPlaying) {
@@ -10,6 +11,6 @@ export class AttackState extends CharacterState {
 
     public onEnter(): void {
         super.onEnter();
-        this.skeletalAnimation.play('Attack_1'); // Phát animation Attack
+        this.skeletalAnimation.play(this.state); // Phát animation Attack
     }
 }
