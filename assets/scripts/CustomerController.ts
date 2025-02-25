@@ -3,6 +3,7 @@ import { IdleState } from './Anim/IdleState';
 import { RunState } from './Anim/RunState';
 import { AttackState } from './Anim/AttackState';
 import { EnemyController } from './EnemyController';
+import { GameManager } from './GameManager';
 const { ccclass, property } = _decorator;
 
 
@@ -88,7 +89,22 @@ export class CustomerController extends Component {
 
     }
     getCustomerNeed() {
-        return 'sung ong gi chua';
+        const type = GameManager.instance.randomizeWeapon();
+        this.setCustomerWepon(type);
+        return type;
+    }
+    setCustomerWepon(weaponType: string){
+        switch (weaponType ) {
+            case "Pistol":
+                console.log("Using Pistol: Shoot with low damage.");
+                break;
+            case "Gun":
+                console.log("Using Gun: Shoot with high damage.");
+                break;
+            default:
+                console.error("Unknown weapon type!");
+                break;
+        }
     }
     doneBuy() {
         console.log("mua xong ");
@@ -165,7 +181,6 @@ export class CustomerController extends Component {
         console.log("Facing towards enemy.");
     }
     private findEnemyNodeInScene(): Node | null {
-        // Tìm kiếm node có tên cụ thể (ví dụ: "Enemy")
         const enemyNode = find("CHARACTER/Enemy");
         if (enemyNode) {
             const enemyController = enemyNode.getComponent(EnemyController);
@@ -180,9 +195,7 @@ export class CustomerController extends Component {
         }
         return null;
     }
+
+   
 }
 
-enum TypeGun {
-    Pistol = 0,
-    Gun = 1
-}

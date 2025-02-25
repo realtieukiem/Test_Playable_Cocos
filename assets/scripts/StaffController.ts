@@ -118,9 +118,11 @@ export class StaffController extends Component {
         //console.log("No customers available. Checking again in 1 second...");
         this.scheduleOnce(() => this.checkAndMoveToCustomerSequentially(), 1);
     }
-
+    /**
+* Cutomer need
+*/
     private checkCustomerNeed() {
-        //Cutomer need
+
         this.currentState = "CheckingCustomerNeed";
 
         const customerNode = this.characterSpawner?.getCustomerNodeByIndex(this.currentTargetIndex);
@@ -141,7 +143,7 @@ export class StaffController extends Component {
         console.log(`Customer needs: ${customerNeed}`);
 
         this.scheduleOnce(() => {
-            console.log("Finished checking customer need.");
+            //console.log("Finished checking customer need.");
             this.moveToNextState();
         }, Data.Time_Work_Staff);
     }
@@ -197,7 +199,7 @@ export class StaffController extends Component {
         const customerPosition = this.characterSpawner?.getSpecificWorldPosition(this.currentTargetIndex);
         const direction = this.target.clone().subtract(this.node.worldPosition).normalize();
         console.log(direction);
-        const targetRotation = this.calculateRotation(direction,true);
+        const targetRotation = this.calculateRotation(direction, true);
         const adjustedPosition = customerPosition.clone();
         adjustedPosition.z += 2;
 

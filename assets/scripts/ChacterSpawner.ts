@@ -55,13 +55,13 @@ export class CharacterSpawner extends Component {
                         customerController.target = targetPosition.worldPosition;
                     }
 
-                    console.log(`Character spawned and moving to position ${i}`);
+                    //console.log(`Character spawned and moving to position ${i}`);
                     return;
                 }
             }
         }
 
-        console.log("No available spawn positions!");
+        //console.log("No available spawn positions!");
     }
 
     /**
