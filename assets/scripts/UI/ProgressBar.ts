@@ -1,4 +1,4 @@
-import { _decorator, Component, Sprite } from 'cc';
+import { _decorator, Component, Sprite, UITransform, Vec3 } from 'cc';
 const { ccclass, property } = _decorator;
 
 @ccclass('ProgressBar')
@@ -23,6 +23,19 @@ export class ProgressBar extends Component {
         // Cập nhật fillRange của Sprite
         if (this.progressSprite) {
             this.progressSprite.fillRange = this.currentProgress;
+        }
+    }
+    public updatePosition(worldPosition: Vec3, offsetY: number) {
+        const uiTransform = this.getComponent(UITransform);
+        if (!uiTransform || !this.node.parent) return;
+
+        // Chuyển đổi vị trí thế giới sang vị trí màn hình
+        const screenPosition = this.node.parent.getComponent(UITransform)?.convertToNodeSpaceAR(worldPosition);
+
+        if (screenPosition) {
+            // Dịch lên trên bằng cách cộng offset vào trục Y
+            screenPosition.y += offsetY;
+            this.node.setPosition(screenPosition);
         }
     }
 }

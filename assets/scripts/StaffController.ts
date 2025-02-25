@@ -1,6 +1,7 @@
 import { _decorator, Component, Node, Vec3, tween, SkeletalAnimation, Quat, math } from 'cc';
 import { CharacterSpawner } from './ChacterSpawner';
 import { CustomerController } from './CustomerController';
+import { ProgressBar } from './UI/ProgressBar';
 import { IdleState } from './Anim/IdleState';
 import { RunState } from './Anim/RunState';
 import { AttackState } from './Anim/AttackState';
@@ -27,6 +28,12 @@ export class StaffController extends Component {
     private currentState: string = "Idle";
     private target: Vec3 = new Vec3(0, 180, 0);
     //private originalRotation: Quat = new Quat();
+    //progess
+    @property({ type: ProgressBar })
+    progressBar: ProgressBar | null = null; 
+    @property({ type: Number })
+    offsetY: number = 100; 
+    private currentProgress: number = 0;
 
 
     start() {
@@ -35,6 +42,29 @@ export class StaffController extends Component {
         //this.node.getRotation(this.originalRotation);
         this.changeState('Idle');
         this.moveToNextState();
+        //progess
+        if (this.progressBar) {
+            this.updateProgresss(0); // Khởi tạo tiến trình
+        }
+    }
+    update(deltaTime: number) {
+        // Tăng tiến trình theo thời gian
+        if (this.currentProgress < 1) {
+            this.currentProgress += deltaTime * 0.1; // Tốc độ tăng tiến trình
+            this.updateProgresss(this.currentProgress);
+        }
+
+        // Cập nhật vị trí của ProgressBar với offset
+        if (this.progressBar) {
+            const worldPosition = this.node.getWorldPosition();
+            this.progressBar.updatePosition(worldPosition, this.offsetY);
+        }
+    }
+    //progess
+    private updateProgresss(value: number) {
+        if (this.progressBar) {
+            this.progressBar.updateProgress(value);
+        }
     }
     //Animation
     public changeState(stateName: string): void {

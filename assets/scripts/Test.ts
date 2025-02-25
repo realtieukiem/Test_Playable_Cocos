@@ -1,13 +1,13 @@
 import { _decorator, Component, Input, Node,KeyCode, input, EventKeyboard } from 'cc';
 import { CustomerController } from './CustomerController';
+import { GameManager } from './GameManager';
+import { ObjectPoolManager } from './ObjectPoolManager';
+import { Bullet } from './Bullet';
 const { ccclass, property } = _decorator;
 
 @ccclass('Test')
 export class Test extends Component {
-    @property({ type: CustomerController })
-    customerController: CustomerController | null = null; // Tham chiếu đến CharacterController
 
-    private keyState: { [key: string]: boolean } = {}; // Lưu trạng thái của các phím
 
     start() {
         // Đăng ký sự kiện bàn phím
@@ -26,46 +26,37 @@ export class Test extends Component {
      */
     private onKeyDown(event: EventKeyboard) {
         //this.keyState[event.keyCode.toString()] = true;
-        if (!this.customerController) return;
 
         switch (event.keyCode) {
             case KeyCode.KEY_A: // Nhấn A để chuyển sang trạng thái Attack
-                this.customerController.changeState('Attack');
+            this.shootBullet();
+                //this.customerController.changeState('Attack');
                 break;
             case KeyCode.KEY_D: // Nhấn D để chuyển sang trạng thái Run
-                this.customerController.changeState('Run');
+                //this.customerController.changeState('Run');
                 break;
             default:
                 break;
         }
     }
 
-    /**
-     * Xử lý khi phím được thả ra
-     */
-    // private onKeyUp(event: EventKeyboard) {
-    //     this.keyState[event.keyCode.toString()] = false;
-    // }
+    private shootBullet() {
+        if (!GameManager.instance.enemyNode) {
+            console.error("EnemyNode is not assigned!");
+            return;
+        }
 
-    /**
-     * Kiểm tra xem một phím có đang được nhấn hay không
-     */
-    // private isKeyPressed(keyCode: KeyCode): boolean {
-    //     return this.keyState[keyCode.toString()] === true;
-    // }
+        const startPosition = this.node.worldPosition; // Vị trí của Customer
+        const targetPosition = GameManager.instance.enemyNode.worldPosition; // Vị trí của Enemy
 
-    // update(deltaTime: number) {
-    //     if (!this.characterController) return;
-
-    //     // Điều khiển trạng thái dựa trên input
-    //     if (this.isKeyPressed(KeyCode.KEY_D)) {
-    //         this.characterController.changeState('Move');
-    //     } else if (this.isKeyPressed(KeyCode.KEY_A)) {
-    //         this.characterController.changeState('Attack_1');
-    //     } else {
-    //         this.characterController.changeState('Idle');
-    //     }
-    // }
+        const bullet = ObjectPoolManager.instance.spawn('Bullet', startPosition); // Lấy đạn từ pool
+        if (bullet) {
+            const bulletScript = bullet.getComponent(Bullet);
+            if (bulletScript) {
+                //bulletScript.initialize(startPosition, targetPosition, 'Bullet');
+            }
+        }
+    }
 }
 
 

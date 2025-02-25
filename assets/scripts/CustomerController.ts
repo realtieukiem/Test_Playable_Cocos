@@ -1,38 +1,50 @@
-import { _decorator, CCBoolean, Component, find, math, Quat, SkeletalAnimation, tween, Vec3, Node, Scene } from 'cc';
+import { _decorator, CCBoolean, Component, find, math, Quat, SkeletalAnimation, tween, Vec3, Node, MeshRenderer, Material, SkinnedMeshRenderer } from 'cc';
 import { IdleState } from './Anim/IdleState';
 import { RunState } from './Anim/RunState';
 import { AttackState } from './Anim/AttackState';
 import { EnemyController } from './EnemyController';
 import { GameManager } from './GameManager';
+import { ObjectPoolManager } from './ObjectPoolManager';
+import { Bullet } from './Bullet';
+import { Data } from './Data';
 const { ccclass, property } = _decorator;
 
 
 @ccclass('CustomerController')
 export class CustomerController extends Component {
+    @property({ type: Material })
+    newMaterial: Material | null = null;
 
-    @property({ type: Node })
-    enemyNode: Node | null = null;
 
 
-    private currentState: any | null = null; // Trạng thái hiện tại
-    private skeletalAnimation: SkeletalAnimation | null = null; // Thành phần SkeletalAnimation
+    private currentState: any | null = null;
+    private skeletalAnimation: SkeletalAnimation | null = null;
     public target: Vec3 = new Vec3(0, 0, 0);
-    private originalRotation: Quat = new Quat(); // Lưu trữ hướng ban đầu
+    private originalRotation: Quat = new Quat();
     private isMovingToBattlePosition: boolean = false;
+    private meshRen: SkinnedMeshRenderer | null = null;
+    //--Gun--
+    private typeWeapon: string = "Pistol";
+    @property({ type: [Node] })
+    nodeWeaponArray: Node[] = [];
+    @property({ type: Node })
+    spawnPosGun: Node | null = null;
 
     start() {
         //find enemy node
-        if (!this.enemyNode) {
-            this.enemyNode = this.findEnemyNodeInScene();
-            if (!this.enemyNode) {
-                console.error("Enemy node not found in the scene!");
-            }
-        }
-        // Khởi tạo SkeletalAnimation
+        // if (!this.enemyNode) {
+        //     this.enemyNode = this.findEnemyNodeInScene();
+        //     if (!this.enemyNode) {
+        //         console.error("Enemy node not found in the scene!");
+        //     }
+        // }
+        //get material
+        this.meshRen = this.getComponentInChildren(SkinnedMeshRenderer);
+        // SkeletalAnimation
         this.skeletalAnimation = this.getComponent(SkeletalAnimation);
         this.node.getRotation(this.originalRotation);
 
-        // Bắt đầu với trạng thái Idle
+        // start idle
         this.changeState('Idle');
         this.moveToTarget();
     }
@@ -89,17 +101,19 @@ export class CustomerController extends Component {
 
     }
     getCustomerNeed() {
-        const type = GameManager.instance.randomizeWeapon();
-        this.setCustomerWepon(type);
-        return type;
+        this.typeWeapon = GameManager.instance.randomizeWeapon();
+        //this.setCustomerWepon(type);
+        return this.typeWeapon;
     }
-    setCustomerWepon(weaponType: string){
-        switch (weaponType ) {
+    setCustomerWepon(weaponType: string) {
+        switch (weaponType) {
             case "Pistol":
-                console.log("Using Pistol: Shoot with low damage.");
+                //console.log("Using Pistol: Shoot with low damage.");
+                this.nodeWeaponArray[0].active = true;
                 break;
             case "Gun":
-                console.log("Using Gun: Shoot with high damage.");
+                //console.log("Using Gun: Shoot with high damage.");
+                this.nodeWeaponArray[1].active = true;
                 break;
             default:
                 console.error("Unknown weapon type!");
@@ -107,23 +121,31 @@ export class CustomerController extends Component {
         }
     }
     doneBuy() {
-        console.log("mua xong ");
-        const posRaw = this.node.getWorldPosition();
-        this.node.setParent(this.node.scene);
-        this.node.setWorldPosition(posRaw);
-
+        //console.log("Buy Done ");
+        //Set parent
+        this.node.setParent(GameManager.instance.targetNode, true);
+        //SetMat
+        this.meshRen.materials[0] = this.newMaterial;
+        //SetWeapon
+        this.setCustomerWepon(this.typeWeapon);
+        //Move
         this.scheduleOnce(() => this.moveToEnemy(), 0.125);
     }
     moveToEnemy() {
         if (this.isMovingToBattlePosition) return; // Đảm bảo không gọi trùng lặp
-
         this.isMovingToBattlePosition = true;
-        console.log("Buy done! Moving to random battle position.");
-
-        // Di chuyển đến vị trí ngẫu nhiên và xoay về hướng enemy
+        //console.log("Buy done! Moving to random battle position.");
         this.moveToRandomBattlePosition();
 
         //this.destroy();
+    }
+    attackEnemy() {
+        this.changeState("Attack");
+        this.schedule(() => {
+            this.shootBullet();
+        }, Data.Time_Shoot_Delay);
+
+
     }
     private calculateRotation(direction: Vec3): Quat {
         const angle = Math.atan2(direction.x, direction.z); // Tính góc theo radian
@@ -153,6 +175,7 @@ export class CustomerController extends Component {
             .call(() => {
                 this.skeletalAnimation?.play("Idle");
                 this.faceTowardsEnemy();
+                this.attackEnemy();
                 //this.node.setRotation(this.originalRotation);
             })
             .start();
@@ -162,13 +185,12 @@ export class CustomerController extends Component {
      * Xoay nhân vật về hướng của enemy
      */
     private faceTowardsEnemy() {
-        if (!this.enemyNode) {
+        if (!GameManager.instance.enemyNode) {
             return;
         }
 
         // Lấy vị trí của enemy
-        const enemyPosition = this.enemyNode.getWorldPosition(new Vec3());
-        this.enemyNode
+        const enemyPosition = GameManager.instance.enemyNode.getWorldPosition(new Vec3());
 
         // Tính toán vector hướng từ nhân vật đến enemy
         const direction = enemyPosition.clone().subtract(this.node.worldPosition).normalize();
@@ -180,22 +202,39 @@ export class CustomerController extends Component {
         this.node.setRotation(rotation); // Áp dụng góc quay
         console.log("Facing towards enemy.");
     }
-    private findEnemyNodeInScene(): Node | null {
-        const enemyNode = find("CHARACTER/Enemy");
-        if (enemyNode) {
-            const enemyController = enemyNode.getComponent(EnemyController);
-            if (enemyController) {
-                console.log("Enemy node found in the scene.");
-                return enemyNode;
-            } else {
-                console.error("Enemy node found but does not have EnemyController component!");
-            }
-        } else {
-            console.error("Enemy node not found in the scene!");
+    // private findEnemyNodeInScene(): Node | null {
+    //     const enemyNode = find("CHARACTER/Enemy");
+    //     if (enemyNode) {
+    //         const enemyController = enemyNode.getComponent(EnemyController);
+    //         if (enemyController) {
+    //             console.log("Enemy node found in the scene.");
+    //             return enemyNode;
+    //         } else {
+    //             console.error("Enemy node found but does not have EnemyController component!");
+    //         }
+    //     } else {
+    //         console.error("Enemy node not found in the scene!");
+    //     }
+    //     return null;
+    // }
+
+    private shootBullet() {
+        if (!GameManager.instance.enemyNode) {
+            console.error("EnemyNode is not assigned!");
+            return;
         }
-        return null;
+
+        const startPosition = this.spawnPosGun.worldPosition; // Vị trí của Customer
+        const targetPosition = GameManager.instance.enemyNode; // Vị trí của Enemy
+
+        const bullet = ObjectPoolManager.instance.spawn('Bullet', startPosition); // Lấy đạn từ pool
+        if (bullet) {
+            const bulletScript = bullet.getComponent(Bullet);
+            if (bulletScript) {
+                bulletScript.initialize(startPosition, targetPosition, 'Bullet');
+            }
+        }
     }
 
-   
 }
 

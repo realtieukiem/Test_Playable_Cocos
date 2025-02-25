@@ -1,13 +1,10 @@
-import { _decorator, Component } from 'cc';
-const { ccclass } = _decorator;
+import { _decorator, Component,Node } from 'cc';
+const { ccclass,property } = _decorator;
 
 @ccclass('GameManager')
 export class GameManager extends Component {
     private static _instance: GameManager | null = null;
     public static get instance(): GameManager {
-        if (!this._instance) {
-            console.error("GameManager instance is not initialized!");
-        }
         return this._instance!;
     }
 
@@ -20,6 +17,11 @@ export class GameManager extends Component {
     }
 
     //------------------------------------------------------------------------------
+    @property({ type: Node })
+    enemyNode: Node | null = null;
+    @property({ type: Node })
+    targetNode: Node; 
+
     private isUpgraded: boolean = false;
     private typeWeapon: WeaponType = WeaponType.Pistol;
 

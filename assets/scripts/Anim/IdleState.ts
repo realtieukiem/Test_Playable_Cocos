@@ -1,3 +1,4 @@
+import { SkeletalAnimation } from 'cc';
 import { CharacterState } from './CharacterState';
 
 export class IdleState extends CharacterState {
