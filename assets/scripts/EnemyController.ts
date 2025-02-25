@@ -18,14 +18,14 @@ export class EnemyController extends Component {
 
     public changeState(stateName: string): void {
         if (this.currentState) {
-            this.currentState.onExit(); // Rời khỏi trạng thái hiện tại
+            this.currentState.onExit();
         }
 
         switch (stateName) {
             case 'First':
-                this.currentState = new FirstState(this.skeletalAnimation);
-                this.currentState.state = this.skeletalAnimation.clips[0].name;
-                //this.skeletalAnimation.play(this.skeletalAnimation.clips[0].name);
+                //this.currentState = new FirstState(this.skeletalAnimation);
+                //this.currentState.state = this.skeletalAnimation.clips[0].name;
+                this.skeletalAnimation.play(this.skeletalAnimation.clips[0].name);
                 console.log('FirstBosss');
                 // this.scheduleOnce(() => {
                 //     this.changeState('Idle');
