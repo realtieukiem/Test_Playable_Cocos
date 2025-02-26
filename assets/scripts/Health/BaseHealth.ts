@@ -37,5 +37,8 @@ export class BaseHealth extends Component {
 
         this.currentHealth = Math.min(this.maxHealth, this.currentHealth + amount);
     }
+    public isAlive(): boolean {
+        return this.currentHealth > 0;
+    }
 
 }

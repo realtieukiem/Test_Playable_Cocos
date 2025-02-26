@@ -123,7 +123,7 @@ export class CustomerController extends Component {
     doneBuy() {
         //console.log("Buy Done ");
         //Set parent
-        this.node.setParent(GameManager.instance.targetNode, true);
+        this.node.setParent(GameManager.instance.customerContainer, true);
         //SetMat
         this.meshRen.materials[0] = this.newMaterial;
         //SetWeapon
@@ -140,7 +140,6 @@ export class CustomerController extends Component {
         //this.destroy();
     }
     attackEnemy() {
-        this.changeState("Attack");
         this.schedule(() => {
             this.shootBullet();
         }, Data.Time_Shoot_Delay);
@@ -223,7 +222,11 @@ export class CustomerController extends Component {
             console.error("EnemyNode is not assigned!");
             return;
         }
+        this.changeState("Attack");
+        this.scheduleOnce(() => {
+            this.changeState('Idle');
 
+        }, 0.25);
         const startPosition = this.spawnPosGun.worldPosition; // Vị trí của Customer
         const targetPosition = GameManager.instance.enemyNode; // Vị trí của Enemy
 
@@ -231,7 +234,7 @@ export class CustomerController extends Component {
         if (bullet) {
             const bulletScript = bullet.getComponent(Bullet);
             if (bulletScript) {
-                bulletScript.initialize(startPosition, targetPosition, 'Bullet');
+                bulletScript.initialize(startPosition, targetPosition, 'Bullet',Data.Damage_Customer);
             }
         }
     }

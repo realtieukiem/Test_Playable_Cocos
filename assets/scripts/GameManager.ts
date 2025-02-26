@@ -20,7 +20,7 @@ export class GameManager extends Component {
     @property({ type: Node })
     enemyNode: Node | null = null;
     @property({ type: Node })
-    targetNode: Node; 
+    customerContainer: Node; 
 
     private isUpgraded: boolean = false;
     private typeWeapon: WeaponType = WeaponType.Pistol;

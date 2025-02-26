@@ -228,7 +228,7 @@ export class StaffController extends Component {
 
         const customerPosition = this.characterSpawner?.getSpecificWorldPosition(this.currentTargetIndex);
         const direction = this.target.clone().subtract(this.node.worldPosition).normalize();
-        console.log(direction);
+        //console.log(direction);
         const targetRotation = this.calculateRotation(direction, true);
         const adjustedPosition = customerPosition.clone();
         adjustedPosition.z += 2;

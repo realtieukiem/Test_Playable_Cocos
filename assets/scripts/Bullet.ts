@@ -12,11 +12,19 @@ export class Bullet extends Component {
     private targetPosition: Vec3 = new Vec3();
     private targetNode: Node | null = null;
     private customName: string = "";
+    private damage: number = 0;
 
-    public initialize(startPosition: Vec3, targetPosition: Node, customName: string) {
+    public initialize(startPosition: Vec3, targetPosition: Node, customName: string, damage:number = 10) {
         this.targetNode = targetPosition;
         this.node.setPosition(startPosition);
         this.targetPosition.set(targetPosition.worldPosition);
+        this.damage = damage;
+        //fix z
+        const adjustedPosition = this.targetPosition.clone();
+        adjustedPosition.z -= 2;
+        this.targetPosition.set(adjustedPosition);
+
+
         this.customName = customName;
     }
 
@@ -33,17 +41,17 @@ export class Bullet extends Component {
 
     private destroyBullet() {
         //damage
-        this.damage();
+        this.causeDamage();
         if (this.customName) {
 
             ObjectPoolManager.instance.despawn(this.customName, this.node); // Trả đạn về pool
         }
     }
-    private damage() {
+    private causeDamage() {
         const targetHealth = this.targetNode.getComponent(BaseHealth);
         if (targetHealth) {
             //console.log("damage");
-            targetHealth.takeDamage(10);
+            targetHealth.takeDamage(this.damage);
         }
     }
 }
