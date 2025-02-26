@@ -6,6 +6,7 @@ import { IdleState } from './Anim/IdleState';
 import { RunState } from './Anim/RunState';
 import { AttackState } from './Anim/AttackState';
 import { Data } from './Data';
+import { GameManager } from './GameManager';
 const { ccclass, property } = _decorator;
 
 @ccclass('StaffController')
@@ -15,8 +16,8 @@ export class StaffController extends Component {
     @property({ type: CharacterSpawner })
     characterSpawner: CharacterSpawner | null = null;
 
-    @property({ type: Node })
-    createItemPosition: Node | null = null;
+    @property({ type: [Node] })
+    createGunPosition: Node[]=[] ;
 
     @property({ type: SkeletalAnimation })
     private skeletalAnimation: SkeletalAnimation | null = null;
@@ -27,6 +28,8 @@ export class StaffController extends Component {
     private currentTargetIndex: number = -1;
     private currentState: string = "Idle";
     private target: Vec3 = new Vec3(0, 180, 0);
+    private customerNeed: string;
+    private targetPosition;
     //private originalRotation: Quat = new Quat();
     //progess
     @property({ type: ProgressBar })
@@ -38,10 +41,10 @@ export class StaffController extends Component {
 
     start() {
         if (!this.characterSpawner) { console.error("Please assign the CharacterSpawner in the Inspector."); }
-        if (!this.createItemPosition) { console.error("Please assign the create item position in the Inspector."); }
-        //this.node.getRotation(this.originalRotation);
+        //if (!this.createItemPosition) { console.error("Please assign the create item position in the Inspector."); }
         this.changeState('Idle');
-        this.moveToNextState();
+        //start
+        //this.moveToNextState();
         //progess
         if (this.progressBar) {
             this.updateProgresss(0); // Khởi tạo tiến trình
@@ -59,6 +62,9 @@ export class StaffController extends Component {
             const worldPosition = this.node.getWorldPosition();
             this.progressBar.updatePosition(worldPosition, this.offsetY);
         }
+    }
+    public checkStartState(){
+        this.moveToNextState();
     }
     //progess
     private updateProgresss(value: number) {
@@ -169,8 +175,8 @@ export class StaffController extends Component {
             return;
         }
 
-        const customerNeed = customerController.getCustomerNeed();
-        console.log(`Customer needs: ${customerNeed}`);
+        this.customerNeed = customerController.getCustomerNeed();
+        console.log(`Customer needs: ${this.customerNeed}`);
 
         this.scheduleOnce(() => {
             //console.log("Finished checking customer need.");
@@ -183,13 +189,25 @@ export class StaffController extends Component {
      */
     private moveToCreateItemPosition() {
         this.currentState = "MovingToCreateItem";
-
-        if (!this.createItemPosition) return;
+        //if (!this.createItemPosition) return;
+        switch (this.customerNeed) {
+            case "Pistol":
+                this.targetPosition = this.createGunPosition[0].getWorldPosition(new Vec3());
+                break;
+            case "Gun":
+                this.targetPosition = this.createGunPosition[1].getWorldPosition(new Vec3());
+                break;
+            default:
+                console.error("Unknown weapon type!");
+                break;
+        }
 
         const direction = this.target.clone().subtract(this.node.worldPosition).normalize();
         const targetRotation = this.calculateRotation(direction);
-        const targetPosition = this.createItemPosition.getWorldPosition(new Vec3());
-        const adjustedPosition = targetPosition.clone();
+
+        //const targetPosition = this.createGunPosition[0].getWorldPosition(new Vec3());
+
+        const adjustedPosition = this.targetPosition.clone();
         adjustedPosition.z += 2;
 
         this.changeState("Run");
@@ -204,9 +222,9 @@ export class StaffController extends Component {
             .call(() => {
                 this.changeState("Idle");
 
-                tween(this.node)
-                    .to(0.125, { eulerAngles: new Vec3(0, -90, 0) })
-                    .start();
+                // tween(this.node)
+                //     .to(0.125, { eulerAngles: new Vec3(0, -90, 0) })
+                //     .start();
             })
             .start();
 
@@ -249,6 +267,7 @@ export class StaffController extends Component {
                 const customerController = customerNode.getComponent(CustomerController);
                 customerController.doneBuy();
                 this.moveToNextState();
+                GameManager.instance.plusCoin(50);
             })
             .start();
 

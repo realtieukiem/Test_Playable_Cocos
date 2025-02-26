@@ -9,8 +9,8 @@ export class CharacterSpawner extends Component {
     @property({ type: [Node] })
     spawnPositions: Node[] = []; // Mảng chứa 4 vị trí spawn
 
-    // @property({ type: Prefab })
-    //characterPrefab: Prefab | null = null; // Prefab của nhân vật cần spawn
+    @property({ type: Prefab })
+    characterPrefab: Prefab | null = null; // Prefab của nhân vật cần spawn
 
     private timer: number = 0; // Biến đếm thời gian
 
@@ -35,28 +35,31 @@ export class CharacterSpawner extends Component {
         }
     }
 
-//Spawn
+    //Spawn
     spawnAndMoveCharacter() {
         for (let i = 0; i < this.spawnPositions.length; i++) {
             const targetPosition = this.spawnPositions[i];
 
             if (!this.isPositionOccupied(targetPosition)) {
                 // Clone prefab
-                //if (this.characterPrefab) {
-                const newCharacter = ObjectPoolManager.instance.spawn(Data.Customer_Name, this.node.worldPosition);
-                //const newCharacter = instantiate(this.characterPrefab); // Clone prefab
-                newCharacter.setParent(this.node); // Đặt nhân vật vào scene
-                newCharacter.setWorldPosition(this.node.worldPosition); // Spawn tại vị trí của node chứa script
+                //const newCharacter = ObjectPoolManager.instance.spawn(Data.Customer_Name, this.node.worldPosition);
 
-                // Lấy component CharacterController từ nhân vật mới
-                const customerController = newCharacter.getComponent(CustomerController);
-                if (customerController) {
-                    customerController.target = targetPosition.worldPosition;
+                if (this.characterPrefab) {
+
+                    const newCharacter = instantiate(this.characterPrefab); // Clone prefab
+                    newCharacter.setParent(this.node); // Đặt nhân vật vào scene
+                    newCharacter.setWorldPosition(this.node.worldPosition); // Spawn tại vị trí của node chứa script
+
+                    // Lấy component CharacterController từ nhân vật mới
+                    const customerController = newCharacter.getComponent(CustomerController);
+                    if (customerController) {
+                        customerController.target = targetPosition.worldPosition;
+                    }
+
+                    //console.log(`Character spawned and moving to position ${i}`);
+                    return;
+                    //}
                 }
-
-                //console.log(`Character spawned and moving to position ${i}`);
-                return;
-                //}
             }
         }
 

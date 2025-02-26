@@ -74,15 +74,22 @@ export class ObjectPoolManager extends Component {
             }
         }
 
-        console.warn(`Pool for prefab ${prefabName} is empty! Consider increasing pool size.`);
-        return null;
+        console.warn(`Pool for prefab ${prefabName} is empty! Creating a new object.`);
+        const prefab = this.prefabs.find(prefab => prefab.name === prefabName);
+        if (!prefab) {
+            console.error(`Prefab ${prefabName} not found in the prefabs list!`);
+            return null;
+        }
+
+        const newObj = instantiate(prefab); 
+        newObj.active = true; 
+        newObj.setPosition(position); 
+        this.node.addChild(newObj); 
+        pool.push(newObj);
+
+        return newObj;
     }
 
-    /**
-     * Trả đối tượng về pool
-     * @param prefabName Tên của prefab
-     * @param obj Node của đối tượng
-     */
     public despawn(prefabName: string, obj: Node) {
         const pool = this.pools.get(prefabName);
         if (!pool) {

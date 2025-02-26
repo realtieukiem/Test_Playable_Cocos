@@ -7,6 +7,7 @@ import { GameManager } from './GameManager';
 import { ObjectPoolManager } from './ObjectPoolManager';
 import { Bullet } from './Bullet';
 import { Data } from './Data';
+import { AudioManager } from './AudioManager';
 const { ccclass, property } = _decorator;
 
 
@@ -23,6 +24,7 @@ export class CustomerController extends Component {
     private originalRotation: Quat = new Quat();
     private isMovingToBattlePosition: boolean = false;
     private meshRen: SkinnedMeshRenderer | null = null;
+    private damageGun: number = 0;
     //--Gun--
     private typeWeapon: string = "Pistol";
     @property({ type: [Node] })
@@ -44,9 +46,21 @@ export class CustomerController extends Component {
         this.skeletalAnimation = this.getComponent(SkeletalAnimation);
         this.node.getRotation(this.originalRotation);
 
+        // // start idle
+        // this.changeState('Idle');
+        // this.moveToTarget();
+    }
+    protected onEnable(): void {
         // start idle
-        this.changeState('Idle');
-        this.moveToTarget();
+        this.scheduleOnce(() => {
+            this.changeState('Idle');
+            this.moveToTarget();
+        }, 0.0125);
+
+    }
+    protected onDisable(): void {
+        this.unschedule(this.shootBullet);
+        //console.log("huy hanh dong");
     }
     update(deltaTime: number) {
         if (this.currentState) {
@@ -55,7 +69,7 @@ export class CustomerController extends Component {
     }
     public changeState(stateName: string): void {
         if (this.currentState) {
-            this.currentState.onExit(); // Rời khỏi trạng thái hiện tại
+            this.currentState.onExit();
         }
 
         switch (stateName) {
@@ -110,10 +124,12 @@ export class CustomerController extends Component {
             case "Pistol":
                 //console.log("Using Pistol: Shoot with low damage.");
                 this.nodeWeaponArray[0].active = true;
+                this.damageGun = Data.Damage_Customer_Pistol;
                 break;
             case "Gun":
                 //console.log("Using Gun: Shoot with high damage.");
                 this.nodeWeaponArray[1].active = true;
+                this.damageGun = Data.Damage_Customer_Gun;
                 break;
             default:
                 console.error("Unknown weapon type!");
@@ -222,6 +238,9 @@ export class CustomerController extends Component {
             console.error("EnemyNode is not assigned!");
             return;
         }
+        //audio
+        AudioManager.instance.onPlaySFX('Button-Click', AudioManager.instance.Audios[3], 1, false);
+        //anim
         this.changeState("Attack");
         this.scheduleOnce(() => {
             this.changeState('Idle');
@@ -234,7 +253,7 @@ export class CustomerController extends Component {
         if (bullet) {
             const bulletScript = bullet.getComponent(Bullet);
             if (bulletScript) {
-                bulletScript.initialize(startPosition, targetPosition, 'Bullet',Data.Damage_Customer);
+                bulletScript.initialize(startPosition, targetPosition, 'Bullet', this.damageGun);
             }
         }
     }

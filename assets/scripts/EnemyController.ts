@@ -18,6 +18,7 @@ export class EnemyController extends Component {
     private skeletalAnimation: SkeletalAnimation | null = null;
     private currentState: any | null = null;
     //Shoot
+    @property({ type: Node })
     private currentCustomer: Node | null = null;
     private isShooting: boolean = false;
     @property({ type: Node })
@@ -70,6 +71,18 @@ export class EnemyController extends Component {
             this.schedule(this.shootBullet, Data.Time_Shoot_Delay);
         }
     }
+    public stopShooting() {
+        if (this.isShooting) {
+            this.isShooting = false;
+            this.unschedule(this.shootBullet);
+            this.currentCustomer = null;
+            this.scheduleOnce(() => {
+
+                this.findCustomer();
+            }, 1);
+
+        }
+    }
     private shootBullet() {
         if (!this.currentCustomer) {
             console.error("CusNode is not assigned!");
@@ -87,16 +100,17 @@ export class EnemyController extends Component {
         if (bullet) {
             const bulletScript = bullet.getComponent(Bullet);
             if (bulletScript) {
-                bulletScript.initialize(startPosition, targetPosition, 'Bullet',Data.Damage_Boss);
+                bulletScript.initialize(startPosition, targetPosition, 'Bullet', Data.Damage_Boss);
             }
         }
     }
 
     private findCustomer() {
+        console.log("Find CusContain" + GameManager.instance.customerContainer.children.length);
         if (GameManager.instance.customerContainer.children.length <= 0) {
             this.scheduleOnce(() => {
                 this.findCustomer();
-
+                console.log("Find Cus");
             }, 1);
             return;
         }

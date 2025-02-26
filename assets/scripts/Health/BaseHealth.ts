@@ -1,4 +1,4 @@
-import { _decorator, Component } from 'cc';
+import { _decorator, Component, Sprite } from 'cc';
 const { ccclass, property } = _decorator;
 
 @ccclass('BaseHealth')
@@ -8,15 +8,21 @@ export class BaseHealth extends Component {
     @property({ type: Number })
     protected currentHealth: number = 0;
 
+    @property({ type: Sprite })
+    healthBarSprite: Sprite | null = null;
+
     start() {
         this.currentHealth = this.maxHealth;
     }
-
+    protected onDisable(): void {
+        this.currentHealth = this.maxHealth;
+    }
     public takeDamage(damage: number) {
         if (this.currentHealth <= 0) {
             this.die();
         } else {
             this.currentHealth -= damage;
+            this.updateHealthBar();
         }
     }
 
@@ -25,8 +31,8 @@ export class BaseHealth extends Component {
     }
 
     protected onDeath() {
-
-        this.node.active = false;
+        //this.currentHealth = this.maxHealth;
+        //this.node.active = false;
     }
 
 
@@ -39,6 +45,15 @@ export class BaseHealth extends Component {
     }
     public isAlive(): boolean {
         return this.currentHealth > 0;
+    }
+    private updateHealthBar() {
+        if (!this.healthBarSprite) {
+            console.error("HealthBar Sprite is not assigned!");
+            return;
+        }
+
+        const fillAmount = this.currentHealth / this.maxHealth; // Tính tỷ lệ máu
+        this.healthBarSprite.fillRange = fillAmount; // Cập nhật fillRange
     }
 
 }
